@@ -1,0 +1,19 @@
+Package: dpcstats
+Type: Package
+Title: Survey of DPC, Converted Into Tidy Data
+Version: 0.0.1
+Authors@R: c(
+    person(
+      "Tomoki", "Nishikawa",
+      email = "tomoki.nishikawa0118@gmail.com",
+      role = c("aut", "cre")
+    )
+  )
+Description: "Survey on the Impact Assessment of DPC Implementation" by Japan's Ministry of Health, Labour and Welfare, converted into tidy data.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends: 
+    R (>= 2.10)
+URL: https://github.com/nissinbo/dpcstats
+BugReports: https://github.com/nissinbo/dpcstats/issues
