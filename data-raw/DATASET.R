@@ -165,6 +165,8 @@ process_dpc_stats <- function(file_name, output_dir = "data") {
   # Define facility columns
   facility_columns <- c("告示番号", "通番", "施設名")
 
+  proc_flag <- str_detect(file_name, "disease_surgery_proc")
+
   # Remove file extension for output name
   output_name <- str_remove(file_name, ".xlsx")
 
@@ -173,9 +175,10 @@ process_dpc_stats <- function(file_name, output_dir = "data") {
     behead("up-left", "disease_code") |>
     behead("up", "disease_name") |>
     behead("up", "unit") |>
+    (\(x) if (proc_flag) behead(x, "up", "surgery") else x)() |>
     behead("up", "category") |>
     mutate(value = coalesce(as.character(numeric), character)) |>
-    select(row, disease_code, disease_name, unit, category, value)
+    (\(x) if (proc_flag) select(x, row, disease_code, disease_name, unit, surgery, category, value) else select(x, row, disease_code, disease_name, unit, category, value))()
 
   # Process facility information
   facility_info <- raw_data |>
@@ -186,13 +189,13 @@ process_dpc_stats <- function(file_name, output_dir = "data") {
   # Process DPC statistics
   dpc_stats <- raw_data |>
     filter(!category %in% facility_columns) |>
-    fill(disease_code, disease_name, unit) |>
-    select(disease_code, disease_name, unit, category, value, row)
+    (\(x) if (proc_flag) fill(x, disease_code, disease_name, unit, surgery) else fill(x, disease_code, disease_name, unit))() |>
+    (\(x) if (proc_flag) select(x, disease_code, disease_name, unit, surgery, category, value, row) else select(x, disease_code, disease_name, unit, category, value, row))()
 
   # Combine facility info with DPC stats
   combined_stats <- facility_info |>
     inner_join(dpc_stats, "row") |>
-    select(施設名, 告示番号, 通番, disease_code, disease_name, unit, category, value)
+    (\(x) if (proc_flag) select(x, 施設名, 告示番号, 通番, disease_code, disease_name, unit, surgery, category, value) else select(x, 施設名, 告示番号, 通番, disease_code, disease_name, unit, category, value))()
 
   # Assign to variable and save
   assign(output_name, combined_stats)
@@ -222,5 +225,4 @@ downloaded_files <- pmap(
 # Process surgery-related DPC statistics files
 dir_ls(here("data-raw", "mdc_files")) |>
   map_chr(~str_remove(basename(.x), ".xlsx")) |>
-  str_subset("disease_surgery_MDC") |>
   iwalk(~process_dpc_stats(str_c(.x, ".xlsx")))
